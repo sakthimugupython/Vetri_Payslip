@@ -884,14 +884,36 @@
         
         function downloadPDF() {
             {% if pdf_file_exists %}
-            // Download the existing PDF file
+            // Download the existing PDF file using fetch and blob
             const pdfUrl = '{{ payslip.pdf_file.url }}';
-            const link = document.createElement('a');
-            link.href = pdfUrl;
-            link.download = `payslip_{{ payslip.employee_id }}_{{ payslip.pay_period|slugify }}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            
+            fetch(pdfUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    // Create blob URL and download
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'payslip_{{ payslip.employee_id }}_{{ payslip.pay_period|slugify }}.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                })
+                .catch(error => {
+                    console.error('Download failed:', error);
+                    // Fallback to direct link
+                    const link = document.createElement('a');
+                    link.href = pdfUrl;
+                    link.download = 'payslip_{{ payslip.employee_id }}_{{ payslip.pay_period|slugify }}.pdf';
+                    link.click();
+                });
             {% else %}
             alert('PDF file not available. Please regenerate the payslip.');
             {% endif %}
