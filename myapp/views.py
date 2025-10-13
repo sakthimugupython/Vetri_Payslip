@@ -404,28 +404,38 @@ def generate_pdf_download(request):
                 'amount_in_words': amount_in_words,
             }
 
-            # Create temporary PDF file (not saved to database)
+            # Create temporary PDF file
             payslips_dir = os.path.join(settings.MEDIA_ROOT, 'payslips')
             os.makedirs(payslips_dir, exist_ok=True)
 
-            # Generate PDF with unique temporary filename
-            temp_filename = f"temp_payslip_{employee_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            # Generate PDF with unique filename
+            temp_filename = f"payslip_{employee_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
             filepath = os.path.join(payslips_dir, temp_filename)
             generate_payslip_pdf(filepath, context)
 
-            return JsonResponse({
-                'success': True,
-                'message': 'Payslip generated for download!',
-                'pdf_url': f'/media/payslips/{temp_filename}',
-                'employee_id': employee_id,
-                'pay_period': pay_period
-            })
+            # Return file for download instead of URL
+            from django.http import FileResponse
+            response = FileResponse(open(filepath, 'rb'), as_attachment=True)
+            response['Content-Disposition'] = f'attachment; filename="{temp_filename}"'
+
+            # Clean up temp file after sending (optional, but good practice)
+            import threading
+            def cleanup():
+                try:
+                    os.remove(filepath)
+                except:
+                    pass
+            threading.Timer(5.0, cleanup).start()
+
+            return response
 
         except Exception as e:
             return JsonResponse({
                 'success': False,
                 'message': f'Error generating payslip: {str(e)}'
             }, status=400)
+
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
 
 @login_required(login_url='login')
 def save_payslip_to_database(request):
@@ -613,9 +623,15 @@ def payslip_detail(request, payslip_id):
     try:
         payslip = Payslip.objects.get(id=payslip_id)
 
+        # Check if PDF file exists
+        pdf_file_exists = False
+        if payslip.pdf_file and os.path.exists(payslip.pdf_file.path):
+            pdf_file_exists = True
+
         # Prepare context data for the template
         context = {
             'payslip': payslip,
+            'pdf_file_exists': pdf_file_exists,
             'payslip_data': {
                 'employee_name': payslip.employee_name,
                 'employee_id': payslip.employee_id,
