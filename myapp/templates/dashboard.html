@@ -64,14 +64,14 @@
                     <div class="row mb-3">
                         <!-- Company Address Column -->
                         <div class="col-md-8 text-start">
-                            <p class="company-address mb-1">Shanthi complex, Second floor,</p>
-                            <p class="company-address mb-1">Surandai, Tenkasi - 627 859</p>
-                            <p class="company-address mb-0">India</p>
+                            <p class="company-address mb-1 text-dark fw-semibold">Shanthi complex, Second floor,</p>
+                            <p class="company-address mb-1 text-dark fw-semibold">Surandai, Tenkasi - 627 859</p>
+                            <p class="company-address mb-0 text-dark fw-semibold">India</p>
                         </div>
 
                         <!-- Payslip Month Info Column -->
                         <div class="col-md-4 text-end">
-                            <p class="payslip-month-label">Payslip for the Month</p>
+                            <p class="payslip-month-label text-dark fw-semibold">Payslip for the Month</p>
                             <div class="modern-month-selector">
                                 <select class="modern-select" id="payslipMonth" required>
                                     <option value="">Select Month</option>
@@ -163,8 +163,8 @@
 
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <div class="income-table">
-                            <div class="table-header">
+                        <div class="income-table" style="border-radius: 20px;border: 1px solid #666666be;">
+                            <div class="table-header" style="border-bottom: 1px solid #666666be;">
                                 <div class="row">
                                     <div class="col-6"><strong>Earnings</strong></div>
                                     <div class="col-6 text-end"><strong>Amount</strong></div>
@@ -195,8 +195,8 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="income-table">
-                            <div class="table-header">
+                        <div class="income-table" style="border-radius: 20px;border: 1px solid #666666be;">
+                            <div class="table-header" style="border-bottom: 1px solid #666666be;">
                                 <div class="row">
                                     <div class="col-6"><strong>Deduction</strong></div>
                                     <div class="col-6 text-end"><strong>Amount</strong></div>
@@ -205,7 +205,7 @@
                             <div class="table-body">
                                 <div class="row py-2">
                                     <div class="col-6">Income Tax</div>
-                                    <div class="col-6 text-end">
+                                    <div class="col-6 text-end py-1">
                                         <input type="number" class="form-control form-control-sm text-end editable-deduction" min="0" step="0.01" placeholder="₹ 0" required>
                                     </div>
                                 </div>
@@ -214,8 +214,8 @@
                                     <div class="col-6 text-end">&nbsp;</div>
                                 </div>
                             </div>
-                            <div class="table-footer">
-                                <div class="row">
+                            <div class="table-footer" style="border-top: 1px solid #666666be; background-color: #3C3084;">
+                                <div class="row" >
                                     <div class="col-6"><strong>Total Deduction</strong></div>
                                     <div class="col-6 text-end">
                                         <input type="number" class="form-control form-control-sm text-end fw-bold" id="totalDeduction" min="0" readonly>
@@ -227,11 +227,11 @@
                 </div>
 
                 <!-- Total Net Payable -->
-                <div class="net-payable-box">
+                <div class="net-payable-box" style="background-color: #f6ffed;">
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <h5 class="mb-1">TOTAL NET PAYABLE</h5>
-                            <p class="mb-0 text-muted">Gross Earnings - Total Deduction</p>
+                            <p class="mb-0 text-dark">Gross Earnings - Total Deduction</p>
                         </div>
                         <div class="col-md-4 text-end">
                             <div class="net-amount">₹ <span id="netPayableAmount">0</span></div>

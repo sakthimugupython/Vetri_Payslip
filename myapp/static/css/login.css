@@ -24,9 +24,28 @@
     text-align: center !important;
 }
 
+.form-input {
+    border: none !important;
+    outline: none !important;
+    flex: 1;
+    font-family: 'SF Pro', system-ui, -apple-system, sans-serif;
+    font-weight: 510;
+    font-size: 18px;
+    line-height: 21px;
+    color: #131313;
+    background: transparent;
+}
+
 .form-input:focus {
     outline: none !important;
     box-shadow: none !important;
+}
+
+/* Style placeholder text to be black and bold */
+.form-input::placeholder {
+    color: #000000 !important;
+    font-weight: 700 !important;
+    opacity: 1;
 }
 
 .welcome-text h2 {
@@ -61,16 +80,25 @@
     }
 
 
-.form-input {
+.password-toggle {
+    color: #6c757d !important;
+    transition: color 0.2s ease !important;
+    text-decoration: none !important;
+    background: transparent !important;
     border: none !important;
-    outline: none !important;
-    flex: 1;
-    font-family: 'SF Pro', system-ui, -apple-system, sans-serif;
-    font-weight: 510;
-    font-size: 18px;
-    line-height: 21px;
-    color: #131313;
-    background: transparent;
+    padding: 0 !important;
+    cursor: pointer !important;
+}
+
+.password-toggle:hover {
+    color: #3C3084 !important;
+}
+
+.password-toggle-icon {
+    display: block !important;
+    width: 20px !important;
+    height: 20px !important;
+    color: black !important;
 }
 
 /* Custom scrollbar */

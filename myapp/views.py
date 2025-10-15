@@ -17,9 +17,24 @@ import os
 from datetime import datetime
 from decimal import Decimal
 
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+
+# Register Calibri font for better Unicode support
+try:
+    pdfmetrics.registerFont(TTFont('Calibri', os.path.join('C:/Windows/Fonts', 'calibri.ttf')))
+    pdfmetrics.registerFont(TTFont('Calibri-Bold', os.path.join('C:/Windows/Fonts', 'calibrib.ttf')))
+    FONT_NAME = 'Calibri-Bold'
+except:
+    # Fallback to Arial if Calibri not available
+    pdfmetrics.registerFont(TTFont('ArialUnicode', os.path.join('C:/Windows/Fonts', 'arial.ttf')))
+    pdfmetrics.registerFont(TTFont('ArialUnicode-Bold', os.path.join('C:/Windows/Fonts', 'arialbd.ttf')))
+    FONT_NAME = 'ArialUnicode-Bold'
+
 def generate_payslip_pdf(filepath, context):
     """Generate PDF payslip using ReportLab - matching HTML preview design"""
-    doc = SimpleDocTemplate(filepath, pagesize=A4, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+
+    doc = SimpleDocTemplate(filepath, pagesize=A4, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40, encoding='utf-8')
     elements = []
     styles = getSampleStyleSheet()
 
@@ -46,7 +61,7 @@ def generate_payslip_pdf(filepath, context):
     # Left column - Logo + Company info
     company_info = []
     if os.path.exists(logo_path):
-        logo = Image(logo_path, width=100, height=100)
+        logo = Image(logo_path, width=70, height=70)
         logo.hAlign = 'LEFT'
         company_info.append(logo)
         company_info.append(Spacer(1, 6))
@@ -58,7 +73,7 @@ def generate_payslip_pdf(filepath, context):
 
     # Right column - Employee Statement
     employee_info = []
-    employee_info.append(Spacer(1, 105))
+    employee_info.append(Spacer(1, 15))
     employee_info.append(Paragraph('<b>Employee Statement</b>', title_style))
 
     employee_text = f"""
@@ -97,54 +112,98 @@ def generate_payslip_pdf(filepath, context):
     elements.append(Spacer(1, 25))
 
     # Earnings and Deductions tables (side-by-side with improved design)
+    # Use rupee symbol with proper encoding
+    rupee = '\u20B9'
     earnings_data = [
         ['Earnings', 'Amount'],
-        ['Basic', f'Rs. {context["basic_salary"]}'],
-        ['Incentive', f'Rs. {context["incentive"]}'],
-        ['Gross Earnings', f'Rs. {context["gross_earnings"]}']
+        ['Basic', f'{rupee} {context["basic_salary"]}'],
+        ['Incentive', f'{rupee} {context["incentive"]}'],
+        ['Gross Earnings', f'{rupee} {context["gross_earnings"]}']
     ]
 
     deductions_data = [
         ['Deduction', 'Amount'],
-        ['Income Tax', f'Rs. {context["income_tax"]}'],
+        ['Income Tax', f'{rupee} {context["income_tax"]}'],
         ['', ''],
-        ['Total Deduction', f'Rs. {context["total_deduction"]}']
+        ['Total Deduction', f'{rupee} {context["total_deduction"]}']
     ]
 
-    earnings_table = Table(earnings_data, colWidths=[120, 120])
+    earnings_table = Table(earnings_data, colWidths=[140, 100])
     earnings_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#5b4d9e')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTNAME', (0, 3), (-1, 3), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        # Header row styling
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#e8f5e9')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('FONTNAME', (0, 0), (-1, 0), FONT_NAME),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        
+        # Body rows styling - use FONT_NAME for rupee symbol support
+        ('BACKGROUND', (0, 1), (-1, 2), colors.white),
+        ('TEXTCOLOR', (0, 1), (-1, 2), colors.black),
+        ('FONTNAME', (0, 1), (-1, 2), FONT_NAME),
+        ('FONTSIZE', (0, 1), (-1, 2), 9),
+        ('ALIGN', (0, 1), (0, 2), 'LEFT'),
+        ('ALIGN', (1, 1), (1, 2), 'RIGHT'),
+        
+        # Footer row styling (Gross Earnings)
         ('BACKGROUND', (0, 3), (-1, 3), colors.HexColor('#5b4d9e')),
         ('TEXTCOLOR', (0, 3), (-1, 3), colors.whitesmoke),
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e0e0e0')),
-        ('BOX', (0, 0), (-1, -1), 2, colors.HexColor('#5b4d9e')),
-        ('ROUNDCORNER', (0, 0), (-1, -1), 5)  # Rounded corners
+        ('FONTNAME', (0, 3), (-1, 3), FONT_NAME),
+        ('FONTSIZE', (0, 3), (-1, 3), 10),
+        ('ALIGN', (0, 3), (0, 3), 'LEFT'),
+        ('ALIGN', (1, 3), (1, 3), 'RIGHT'),
+        
+        # Padding
+        ('TOPPADDING', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('LEFTPADDING', (0, 0), (-1, -1), 12),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+        
+        # Borders
+        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#d0d0d0')),
+        ('LINEBELOW', (0, 0), (-1, 0), 1, colors.HexColor('#d0d0d0')),
+        ('LINEABOVE', (0, 3), (-1, 3), 1, colors.HexColor('#d0d0d0')),
+        ('ROUNDEDCORNERS', [8, 8, 8, 8])
     ]))
 
-    deductions_table = Table(deductions_data, colWidths=[120, 120])
+    deductions_table = Table(deductions_data, colWidths=[140, 100])
     deductions_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#5b4d9e')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTNAME', (0, 3), (-1, 3), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        # Header row styling
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#e8f5e9')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('FONTNAME', (0, 0), (-1, 0), FONT_NAME),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        
+        # Body rows styling - use FONT_NAME for rupee symbol support
+        ('BACKGROUND', (0, 1), (-1, 2), colors.white),
+        ('TEXTCOLOR', (0, 1), (-1, 2), colors.black),
+        ('FONTNAME', (0, 1), (-1, 2), FONT_NAME),
+        ('FONTSIZE', (0, 1), (-1, 2), 9),
+        ('ALIGN', (0, 1), (0, 2), 'LEFT'),
+        ('ALIGN', (1, 1), (1, 2), 'RIGHT'),
+        
+        # Footer row styling (Total Deduction)
         ('BACKGROUND', (0, 3), (-1, 3), colors.HexColor('#5b4d9e')),
         ('TEXTCOLOR', (0, 3), (-1, 3), colors.whitesmoke),
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e0e0e0')),
-        ('BOX', (0, 0), (-1, -1), 2, colors.HexColor('#5b4d9e')),
-        ('ROUNDCORNER', (0, 0), (-1, -1), 5)  # Rounded corners
+        ('FONTNAME', (0, 3), (-1, 3), FONT_NAME),
+        ('FONTSIZE', (0, 3), (-1, 3), 10),
+        ('ALIGN', (0, 3), (0, 3), 'LEFT'),
+        ('ALIGN', (1, 3), (1, 3), 'RIGHT'),
+        
+        # Padding
+        ('TOPPADDING', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('LEFTPADDING', (0, 0), (-1, -1), 12),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+        
+        # Borders
+        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#d0d0d0')),
+        ('LINEBELOW', (0, 0), (-1, 0), 1, colors.HexColor('#d0d0d0')),
+        ('LINEABOVE', (0, 3), (-1, 3), 1, colors.HexColor('#d0d0d0')),
+        ('ROUNDEDCORNERS', [8, 8, 8, 8])
     ]))
 
     # Place tables side by side with proper spacing
@@ -158,23 +217,62 @@ def generate_payslip_pdf(filepath, context):
     elements.append(combined_table)
     elements.append(Spacer(1, 30))
 
-    # Net Payable section (fixed <br> tag issue)
+    # Net Payable section with new design
+    # Create two separate paragraphs for title and subtitle
+    title_style = ParagraphStyle(
+        'NetPayableTitle',
+        parent=styles['Normal'],
+        fontSize=13,
+        fontName=FONT_NAME,
+        textColor=colors.black,
+        leading=16,
+        fontWeight='BOLD'
+    )
+    subtitle_style = ParagraphStyle(
+        'NetPayableSubtitle',
+        parent=styles['Normal'],
+        fontSize=9,
+        fontName='Helvetica',
+        textColor=colors.HexColor('#666666'),
+        leading=12
+    )
+    
+    title_para = Paragraph('TOTAL NET PAYABLE', title_style)
+    subtitle_para = Paragraph('Gross Earnings - Total Deduction', subtitle_style)
+    
+    # Combine them in a table-like structure
+    left_cell_data = [[title_para], [subtitle_para]]
+    left_cell = Table(left_cell_data, colWidths=[200])
+    left_cell.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+    ]))
+    
     net_payable_data = [
-        ['TOTAL NET PAYABLE = Gross Earnings - Total Deduction', f'Rs. {context["net_payable"]}']
+        [left_cell, f'{rupee} {context["net_payable"]}']
     ]
-    net_payable_table = Table(net_payable_data, colWidths=[350, 130] )
+    net_payable_table = Table(net_payable_data, colWidths=[370, 130])  # Adjusted proportions to match design
     net_payable_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#fafafa')),
+        # Light background for entire section
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f9fdf7')),  # Very light green background
+        # Purple background only for amount cell
         ('BACKGROUND', (1, 0), (1, 0), colors.HexColor('#5b4d9e')),
-        ('TEXTCOLOR', (1, 0), (1, 0), colors.whitesmoke),
+        ('TEXTCOLOR', (0, 0), (0, 0), colors.black),  # Black text for left cell
+        ('TEXTCOLOR', (1, 0), (1, 0), colors.whitesmoke),  # White text for amount
         ('ALIGN', (0, 0), (0, 0), 'LEFT'),
         ('ALIGN', (1, 0), (1, 0), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (0, 0), 10),
-        ('FONTSIZE', (1, 0), (1, 0), 12),
-        ('TOPPADDING', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
-        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#e0e0e0'))
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('FONTNAME', (1, 0), (1, 0), FONT_NAME),
+        ('FONTSIZE', (1, 0), (1, 0), 16),  # Larger font for prominence
+        ('TOPPADDING', (0, 0), (-1, -1), 15),   # More padding for height
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 15), # More padding for height
+        ('LEFTPADDING', (0, 0), (0, 0), 15),    # More left padding
+        ('RIGHTPADDING', (1, 0), (1, 0), 20),   # More right padding for blue box
+        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#e0e0d0')),  # Subtle outer border
+        ('ROUNDEDCORNERS', [8, 8, 8, 8])  # More rounded corners
     ]))
     elements.append(net_payable_table)
     elements.append(Spacer(1, 10))
@@ -202,7 +300,7 @@ def generate_payslip_pdf(filepath, context):
     signature_table = Table(signature_data, colWidths=[240, 240])
     signature_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 1), (-1, 1), FONT_NAME),
         ('FONTSIZE', (0, 0), (-1, 0), 9),
         ('FONTSIZE', (0, 1), (-1, 1), 9),
         ('FONTSIZE', (0, 2), (-1, 2), 8),
@@ -212,7 +310,7 @@ def generate_payslip_pdf(filepath, context):
     ]))
     elements.append(signature_table)
 
-    # Build PDF
+    # Build PDF with proper encoding
     doc.build(elements)
 
 def login_view(request):
@@ -227,10 +325,23 @@ def login_view(request):
         pass  # Consume all messages
 
     if request.method == 'POST':
-        username = request.POST.get('username')
+        username_or_email = request.POST.get('username')
         password = request.POST.get('password')
 
-        user = authenticate(request, username=username, password=password)
+        # First, try to authenticate with the provided value as username
+        user = authenticate(request, username=username_or_email, password=password)
+
+        # If username authentication fails, try to find user by email
+        if user is None:
+            from django.contrib.auth.models import User
+            try:
+                # Try to find user by email
+                user_obj = User.objects.get(email=username_or_email)
+                # Authenticate with the found user's username
+                user = authenticate(request, username=user_obj.username, password=password)
+            except User.DoesNotExist:
+                # No user found with that email
+                pass
 
         if user is not None:
             if user.is_superuser:
@@ -240,7 +351,7 @@ def login_view(request):
             else:
                 messages.error(request, 'Access denied. Only superusers can login.')
         else:
-            messages.error(request, 'Invalid username or password.')
+            messages.error(request, 'Invalid username/email or password.')
 
     return render(request, 'login.html')
 
